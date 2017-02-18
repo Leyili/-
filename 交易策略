@@ -54,3 +54,227 @@ policy.1<-function(signals,market,opened.pos,money,bet=0.2,
 #val 表示交易的股票数量
 # action= open then 建仓  =close 则是平仓 
 #posID 如果非空 则是需要平仓的仓位id
+
+
+
+
+
+policy2=function(signals,market,opened.pos,money,bet=0.2,
+                 exp.prof=0.025,max.loss=0.05)
+  {
+  d<-NROW(market) # this is the ID of today
+  orders<-NULL
+  n0s=NROW(opened.pos)
+  
+  if(!n0s && signals[d]=='h')  return(orders)
+  
+  if (signals[d]=='b'){
+    quant=round(bet*money/market[d,'Close'],0)
+  if(quant>0)
+    orders=rbind(orders,
+                 data.frame(order=c(1,-1,-1),order.type=c(1,2,3),
+                            val=c(quant,market[d,'Close']*(1+exp.prof),
+                                  market[d,'Close']*(1-max.loss)),
+                            action=c('open','close','close'),
+                            posID=c(NA,NA,NA))
+                )
+    }
+  else if (signals[d]=='s'){
+    need2buy=sum(opened.pos[opened.pos[,'pos.type']==-1,
+                            'N.stocks'])*market[d,'Close']
+    quant=round(bet*(money-need2buy)/market[d,'Close'],0)
+    if (quant>0)
+      orders=rbind(orders,
+                   data.frame(order=c(-1,1,1),order.type=c(1,2,3),
+                              val=c(quant,market[d,'Close']*(1-exp.prof),
+                                    market[d,'Close']*(1+max.loss)),
+                              action=c('open','close','close'),
+                              posID=c(NA,NA,NA)))
+  }
+  orders
+  
+}
+
+##对交易策略结果的测试 支持向量机算法下
+s=svm(tform,tdata.train[start,],cost=10,gamma=0.01)
+p=predict(s,tdata.train[end,])
+sig=trading.signals(p,0.1,-0.1)
+t1=trading.simulator(market,sig,'policy1,list(exp.prof=0.05,bet=0.2,hold.time=10)
+summary(t1)
+tradingEvaluation(t1) #反馈一系列的经济指标
+plot(t1,market,theme='white',name='')
+
+t2=trading.simulator(market,sig,'policy2',list(exp.prof=0.05,bet=0.3))
+summary(t2)
+tradingEvaluation(t2) #反馈一系列的经济指标
+plot(t2,market,theme='white',name='')
+
+##** 不同的测试时间段返回的结果会呈现显著性差异  所以不同时间段的模型应该有区别或者说不同的交易策略   箱体区域  下跌区域  牛市期间
+
+
+##对多个交易系统的指标可靠性估计   基于蒙特卡洛
+## svm
+mc.svmr=function(form,train,test,b.t=0.1,s.t=0.1,...)
+{
+  require(e1071)
+  t=svm(form,train)
+  p=predict(t,test)
+  trading.signals(p,b.t,s.t)
+  
+}
+
+mc.svmc=function(form,train,test,b.t=0.1,s.t=0.1,...)
+{
+  require(e1071)
+  tgtName=all.vars(form)[1]
+  train[,tgtName]=trading.signals(train[,tgtName],b.t,s.t)
+  t=svm(form,train)
+  p=predict(t,test)
+  factor(p,levels = c('s','h','b'))
+}
+
+## the same using nnet and earth
+
+
+eval.stats=function(form,train,test,preds,b.t=0.1,s.t=-0.1){
+  tgtname=all.vars(form)[1]
+  test[,tgtName]=trading.signals(test[,tgtName],b.t,s.t)
+  st=sigs.PR(preds,test[,tgtName])
+  dim(st)=NULL
+  names(st)=paste(rep(c('prec','rec'),each=3),c('s','b','sb'),sep = '.')
+  
+  date=rownames(test)[1]
+  market=GSPC[paste(date,'/',sep = '')][1:length(preds),]  
+  ##GSPc represent the data we need to anlysis,can change it for different data
+  trade.res=trading.simulator(market,preds,...)
+  
+  c(st,tradingEvaluation(trade.res))
+  }
+
+single=function(form,train,test,learner,policy.func,...)
+{
+  p=do.call(paste('MC',learner,sep='.'),list(form,train,test,...))
+  eval.stats(form,train,test,p,policy.func)
+}
+
+slide=function(form,train,test,learner,relearn.step,policy.func,...)
+{
+  real.learner=learner(paste("MC",learner,sep='.'),pars=list(...))
+  p=slidingWindowTest(real.learner,form,train,test,relearn.step)
+  p=factor(p,level=1:3,label=c('s','h','b'))
+  eval.stats(form,train,test,p,policy.func)
+}
+
+grow=function(form,train,test,learner,relearn.step,policy.func,...)
+{
+  real.learner=learner(paste("MC",learner,sep='.'),pars=list(...))
+  p=growWindowTest(real.learner,form,train,test,relearn.step)
+  p=factor(p,level=1:3,label=c('s','h','b'))
+  eval.stats(form,train,test,p,policy.func)
+}
+
+pol1=function(signals,market,op,money)
+{
+  policy.1(signals,market,op,money,bet=0.2,...)
+}
+
+pol2=function(signals,market,op,money)
+{
+  policy2(signals,market,op,money,bet=0.2,...)
+}
+
+todo=c('svmr','svmc','earth','nnetr', 'nnetc')
+dss=list(dataset(tform,tdata.train,'sp500'))
+mcsets=mcSettings(20,2540,1270,1234)
+vars=list()
+vars$svmr=list(cost=c(10,150),gamma=c(0.01,0.001),policy.func=c('pol1','pol2'))
+vars$svmc=list(cost=c(10,150),gamma=c(0.01,0.001),policy.func=c('pol1','pol2'))
+vars$nnetr=list(linout=T,maxit=750,size=c(5,10),decay=c(0.001,0.01),policy.func=c('pol1','pol2'))
+vars$nnetc=list(linout=F,maxit=750,size=c(5,10),decay=c(0.001,0.01),policy.func=c('pol1','pol2'))
+vars$earth=list(nk=c(10,17),degree=c(1,2),thresh=c(0.01,0.001),policy.func=c('pol1','pol2'))
+
+for(td in todo){
+  assign(td,experimentalComparison(dss,c(do.call('variants',
+                                                  c(list('single',learner=td),
+                                                    vars[[td]],
+                                                    varsrootname=paste('single',td,sep='.'))),
+                                         do.call('variants',
+                                                 c(list('slide',learner=td,relearn.step=c(60,120)),
+                                                   vars[[td]],
+                                                   varsrootname=paste('slide',td,sep='.'))),
+                                         do.call('variants',
+                                                 c(list('grow',learner=td,relearn.step=c(60,120)),
+                                                   vars[[td]],
+                                                   varsrootname=paste('grow',td,sep='.')))
+                                         ),
+                                  mcsets)
+         )
+  save(list=td,file = paste(td,'Rdata',sep='.'))
+}
+
+load('svmr.Rdata')  # the same total 5 data set.
+
+tgtstats=c('prec.sb','ret','percprof','maxdd','sharperatio')
+
+allsysres=join(subset(svmr,stats=tgtstats),
+            ## 其他的也一样
+            )
+       
+rankSystems(allsysres,5,maxs=c(T,T,T,F,T))
+
+##对模型加入约束条件
+1.交易数量大于20
+2.回报率大于0.5%
+3.盈利交易的百分比大于40%
+result=join(svmr,xx,by='variants')
+nt=statScores(result,'NTrades')[[1]]
+rt=statScores(result,'ret')[[1]]
+pp=statScores(result,'percprof')[[1]]
+s1=names(nt)[which(nt>20)]
+s2=names(rt)[which(rt>0.5)]
+s3=names(pp)[which(pp>40)]
+bestchoice=intersect(intersect(s1,s2),s3)
+summary(subset(result,stats=tgtstats,vars=bestchoice))
+
+compAnalysis(subset(result,stats=tgtstats,vars=bestchoice))
+plot(subset(result,stats=c('ret','percprof','maxdd'),vars=bestchoice))
+
+getVariant('model name',nnetr)
+
+
+###mc过程结束 用最优模型在测试期上面观察其性能
+
+data=tail(tdata.train,2540)
+results=list()
+for (name in bestchoice){
+  sys=getVariant(name,result)
+  results[[name]]=runLearner(sys,tform,data,tdata.eval)
+}
+
+results=t(as.data.frame(results))
+
+results[,c('ret','retoverbh','maxdd','sharperatio','ntrades','percprof')]
+getVariant('model name',result)
+
+model=learner('mc.nnetr',list(maxit=750,linout=T,trace=F,size=10,decay=0.001))
+preds=growingWindowTest(model,tform,data,tdata.eval,relearn.step = 120)
+signals=factor(preds,levels = 1:3,labels=c('s','h','b'))
+date=rownames(tdata.eval)[1]
+market=GSPC[paste(date,'/',sep='')][1:length(signals),]
+trade.res=trading.simulator(market,signals,policy.func = 'pol1')
+
+plot(trade.res,market,theme='white',name='test result')
+
+library(PerformanceAnalytics)
+rets=Return.calculate(trade.res@trading$Equity)
+chart.CumReturns(rets)
+yearlyReturn(trade.res@trading$Equity)
+
+plot(100*yearlyReturn(trade.res@trading$Equity))
+abline(h=0,lty=2)
+
+table.DownsideRisk(rets)
+
+##完成大部分线下测试  需要的是更改预测模型与交易策略 和实现实时交易变成在线交易系统
+
+
