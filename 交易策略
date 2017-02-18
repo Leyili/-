@@ -1,0 +1,56 @@
+policy.1<-function(signals,market,opened.pos,money,bet=0.2,
+                   hold.time=10,exp.prof=0.025,max.loss=0.05)
+  {
+  d<-NROW(market) # this is the ID of today
+  orders<-NULL
+  n0s=NROW(opened.pos)
+  if(!n0s && signals[d]=='h')  return(orders)
+  
+  if (signals[d]=='b' && !n0s)
+    quant=round(bet*money/market[d,'Close'],0)
+    if(quant>0)
+      orders=rbind(orders,
+                   data.frame(order=c(1,-1,-1),order.type=c(1,2,3),
+                              val=c(quant,market[d,'Close']*(1+exp.prof),
+                                    market[d,'Close']*(1-max.loss)),
+                              action=c('open','close','close'),
+                              posID=c(NA,NA,NA)
+                              )
+                   )
+    else if (signals[d]=='s' && !n0s){
+      need2buy=sum(opened.pos[opened.pos[,'pos.type']==-1,
+                              'N.stocks'])*market[d,'Close']
+      quant=round(bet*(money-need2buy)/market[d,'Close'],0)
+      if (quant>0)
+        orders=rbind(orders,
+                     data.frame(order=c(1,-1,-1),order.type=c(1,2,3),
+                                val=c(quant,market[d,'Close']*(1-exp.prof),
+                                      market[d,'Close']*(1+max.loss)),
+                                action=c('open','close','close'),
+                                posID=c(NA,NA,NA)))
+    }
+    if (n0s)
+      for (i in 1:n0s){
+        if (d-opened.pos[i,'0date']>=hold.time)
+          orders=rbind(orders,
+                       data.frame(order=-opened.pos[i,'pos.type'],
+                                  order.type=1,
+                                  val=NA,
+                                  action='close',
+                                  posID=rownames(opened.pos[i])
+                                  )
+                       )
+      }
+    orders
+
+}
+#每一个交易日之后  收集到4个参数  
+#含有直到d天的一个预测信号的向量  市场报价  当前的仓位  可使用资金
+##当前仓位 是一个矩阵  pos.type =1 多头 =-1 空头  N.stock该仓位的股票数量  
+##0data 开仓日期  0price是开仓价格
+
+#order =1 买入 order=-1卖出
+#order.type= 1 则是需要立刻执行的交易  2 代表限价  3 代表止损
+#val 表示交易的股票数量
+# action= open then 建仓  =close 则是平仓 
+#posID 如果非空 则是需要平仓的仓位id
