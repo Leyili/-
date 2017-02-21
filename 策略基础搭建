@@ -1,0 +1,32 @@
+##该策略要求在发出信号后完成交易 
+#该策略要求 输入持仓情况  矩阵形式  each day rewrite the open matrix.
+# signal should be compute for each day.
+#open  looks like this：
+      date price type N.stocks
+ [1,]   NA    NA   NA       NA
+ [2,]   NA    NA   NA       NA
+ [3,]   NA    NA   NA       NA
+ [4,]   NA    NA   NA       NA
+ [5,]   NA    NA   NA       NA
+ 
+ 
+ police1=function(data,loss=0.02){
+    macd=MACD(data[,"Close"], 12, 26, 9, maType="EMA" )   # have two   macd and signal  under no open if signal>macd  sell signal <macd  buy  
+    signal=as.numeric()
+    macd1=na.omit(macd)
+    for (i in 1:nrow(macd)){
+    if (macd1[i,1]>macd1[i,2] )
+     {signal[i]=1} #上涨
+      if (macd1[i,1]<macd1[i,2] )
+     {signal[i]=0} # 下跌
+      }
+  id=as.numeric()
+  for( i in 1:(length(signal)-1)){
+  if (signal[i]!= signal[i+1])
+  {id[i]=1}
+  else {id[i]=0}
+  }
+
+  tradeday=which(id==1)+1+nrow(macd)-nrow(macd1) 
+  aa=ttrc[tradeday,5]
+  sum(aa[seq(1,length(aa),2)])-(sum(aa)-sum(aa[seq(1,length(aa),2)]))
