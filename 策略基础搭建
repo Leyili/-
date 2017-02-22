@@ -10,32 +10,30 @@
  [5,]   NA    NA   NA       NA
  
  
- #signal come from the macd  just as an sample one to test the police
-macd=MACD(data[,"Close"], 12, 26, 9, maType="EMA" ) 
+#signal come from the macd  to test the signal
+#002493 the real stock test
+gu=read.csv()
+gu$date=as.POSIXct(gu$date)
+gu1=xts(gu,order.by = gu$date)
+macd=MACD(gu1[,"close"], 12, 26, 9, maType="EMA" ) 
 signal=as.numeric()
-macd1=na.omit(macd)
+macd1=as.matrix(na.omit(macd))
 for (i in 1: (nrow(macd1)-1)){
-  if ( macd1[i,1]> macd1[i,2] && (macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0)
+  if ( macd1[i,1]> macd1[i,2] && ((macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0))
   {signal[i]=-1}
-  else if ( macd1[i,1]< macd1[i,2] && (macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0)
+  else if ( macd1[i,1]< macd1[i,2] && ((macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0))
   {signal[i]=1}
   else {signal[i]=0}
 }
 buyday=which(signal=='1')+nrow(macd)-nrow(macd1)+1
 sellday=which(signal=='-1')+nrow(macd)-nrow(macd1)+1
-aa=data[buyday,5]
-bb=data[sellday,5]
- 
-## result of macd method:
-sum(aa)-sum(bb)    #=-22.86  
-#the finaly price is 52 and start price is 4.  always hold return 10 times and macd return -5 times in 20 years. 
-#but the assumption is that we always have enough money to continue our strategy.
+aa=gu1[buyday,5]
+bb=gu1[sellday,5]
+sum(as.numeric(aa))-sum(as.numeric(bb)) = 5.33 
 
+#So consider the each trade we have the enough money to buy one stock. 
+#we need to set our first money and get open information.
 
-#So consider the each trade we have the enough money to buy one stock. we need to set our first money and give more restrict for the 
-open to see whether it looks like.
-
-if (signal=1)
 
 
 
