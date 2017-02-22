@@ -17,16 +17,27 @@ macd1=na.omit(macd)
 for (i in 1: (nrow(macd1)-1)){
   if ( macd1[i,1]> macd1[i,2] && (macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0)
   {signal[i]=-1}
-  if ( macd1[i,1]< macd1[i,2] && (macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0)
+  else if ( macd1[i,1]< macd1[i,2] && (macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0)
   {signal[i]=1}
   else {signal[i]=0}
 }
-tradeday=which(signal=='1')+nrow(macd)-nrow(macd1)+1
-aa=data[tradeday,5]
+buyday=which(signal=='1')+nrow(macd)-nrow(macd1)+1
+sellday=which(signal=='-1')+nrow(macd)-nrow(macd1)+1
+aa=data[buyday,5]
+bb=data[sellday,5]
  
 ## result of macd method:
-sum(aa[seq(1,length(aa),2)])-(sum(aa)-sum(aa[seq(1,length(aa),2)]))
+sum(aa)-sum(bb)    #=-22.86  
+#the finaly price is 52 and start price is 4.  always hold return 10 times and macd return -5 times in 20 years. 
+#but the assumption is that we always have enough money to continue our strategy.
+
+
+#So consider the each trade we have the enough money to buy one stock. we need to set our first money and give more restrict for the 
+open to see whether it looks like.
+
+if (signal=1)
 
 
 
-consider the each trade we have the enough money to buy one stock.
+
+
