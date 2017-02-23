@@ -6,7 +6,7 @@ policy.1<-function(signals,market,opened.pos,money,bet=0.2,
   n0s=NROW(opened.pos)
   if(!n0s && signals[d]=='h')  return(orders)
   
-  if (signals[d]=='b' && !n0s)
+  if (signals[d]=='b' && !n0s)   # 发出买入信号 并且成为是空仓的情况下
     quant=round(bet*money/market[d,'Close'],0)
     if(quant>0)
       orders=rbind(orders,
@@ -17,7 +17,7 @@ policy.1<-function(signals,market,opened.pos,money,bet=0.2,
                               posID=c(NA,NA,NA)
                               )
                    )
-    else if (signals[d]=='s' && !n0s){
+    else if (signals[d]=='s' && !n0s){   #卖出 空仓
       need2buy=sum(opened.pos[opened.pos[,'pos.type']==-1,
                               'N.stocks'])*market[d,'Close']
       quant=round(bet*(money-need2buy)/market[d,'Close'],0)
@@ -29,7 +29,7 @@ policy.1<-function(signals,market,opened.pos,money,bet=0.2,
                                 action=c('open','close','close'),
                                 posID=c(NA,NA,NA)))
     }
-    if (n0s)
+    if (n0s)  #开仓的情况下
       for (i in 1:n0s){
         if (d-opened.pos[i,'0date']>=hold.time)
           orders=rbind(orders,
