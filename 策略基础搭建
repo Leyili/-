@@ -14,7 +14,7 @@
 #002493 the real stock test
 gu=read.csv()
 gu$date=as.POSIXct(gu$date)
-gu1=xts(gu,order.by = gu$date)
+gu1=xts(gu,order.by = gu$date) ## just transform the order from 2017-2014  to 2014-2017  这个在作图部分会报错 因为mix了posixct
 macd=MACD(gu1[,"close"], 12, 26, 9, maType="EMA" ) 
 signal=as.numeric()
 macd1=as.matrix(na.omit(macd))
@@ -30,6 +30,9 @@ sellday=which(signal=='-1')+nrow(macd)-nrow(macd1)+1
 aa=gu1[buyday,5]
 bb=gu1[sellday,5]
 sum(as.numeric(aa))-sum(as.numeric(bb)) = 5.33 
+
+#when we use the csv data and read it, it always regard the data as factor and we need transform it into xts data.
+#gu2=as.xts(gu1[,2:6],order.by = as.Date(gu1$date)) give the data into order part
 
 #So consider the each trade we have the enough money to buy one stock. 
 #we need to set our first money and get open information.
