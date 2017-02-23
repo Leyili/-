@@ -20,6 +20,7 @@ signal=as.numeric()
 macd1=as.matrix(na.omit(macd))
 for (i in 1: (nrow(macd1)-1)){
   if ( macd1[i,1]> macd1[i,2] && ((macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0))
+  
   {signal[i]=-1}
   else if ( macd1[i,1]< macd1[i,2] && ((macd1[i,1]-macd1[i,2])*(macd1[i+1,1]-macd1[i+1,2])<0))
   {signal[i]=1}
@@ -27,9 +28,22 @@ for (i in 1: (nrow(macd1)-1)){
 }
 buyday=which(signal=='1')+nrow(macd)-nrow(macd1)+1
 sellday=which(signal=='-1')+nrow(macd)-nrow(macd1)+1
+
+
+now we should use those information to form the open matrix
+
+###创建持仓数据集
+open[j,]=matrix(c(as.Date(gu1[tradeday[i,1],1]),gu[tradeday[i,1],5],tradeday[i,2],1),nrow = 1)
+## 注意这里由于 c()的扁平化处理 会导致时间数据变成一个数值,但是在后期处理的时候可以把该数值重新转换成日期
+##open最后为了显示时间数据 需要转换成data.frame模型   matrix不支持mix的数据
+
+
+##测试signal 结果
 aa=gu1[buyday,5]
 bb=gu1[sellday,5]
 sum(as.numeric(aa))-sum(as.numeric(bb)) = 5.33 
+##
+
 
 #when we use the csv data and read it, it always regard the data as factor and we need transform it into xts data.
 #gu2=as.xts(gu1[,2:6],order.by = as.Date(gu1$date)) give the data into order part
