@@ -29,6 +29,14 @@ for (i in 1: (nrow(macd1)-1)){
 buyday=which(signal=='1')+nrow(macd)-nrow(macd1)+1
 sellday=which(signal=='-1')+nrow(macd)-nrow(macd1)+1
 
+buyday=buyday[-28]
+
+buyday1=matrix(cbind(buyday,rep(1,27)),ncol = 2,nrow = 27)
+sellday1=matrix(cbind(sellday,rep(-1,27)),ncol = 2,nrow = 27)
+
+tradeday=rbind(sellday1,buyday1)
+tradeday=tradeday[order(tradeday[,1]),]
+
 
 now we should use those information to form the open matrix
 
