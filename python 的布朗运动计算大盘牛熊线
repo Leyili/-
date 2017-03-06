@@ -109,7 +109,7 @@ def kdj(param = [14,3,0,3,0,70,30]):
     myStrategy.attachAnalyzer(returnsAnalyzer)
     plt = plotter.StrategyPlotter(myStrategy, True, True, True)
     plt.getOrCreateSubplot("returns").addDataSeries("Simple returns", returnsAnalyzer.getReturns())
-    ds = pyalg_utils.dataSet(myStrategy)  # 抽取交易数据集语句，若使用系统自带画图功能则不需要该项
+    ds = pyalg_utils.dataSet(myStrategy)  # 抽取交易数据集语句
     myStrategy.run()
     #plt.plot()
 
