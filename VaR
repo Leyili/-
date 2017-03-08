@@ -1,0 +1,40 @@
+way 1: 历史模拟法
+x;一组时间收益率数据 
+alpha=0.05; 
+fun1=function(x,alpha){ 
+n=length(x); 
+VaR=rep(0,times=n-1); 
+for(i in 2:n){ 
+VaR=mean(x[1:i-1])-quantile(x[1:i-1],alpha); 
+} 
+VaR     
+} 
+fun1(x,alpha) 
+
+way2: 方差-协方差法
+x=;同上 
+h=; 拟合金融资产序列，如用GARCH族模型拟合金融资产价值序列，可以得到其在各期的条件标准差序列，设计算所得条件标准差 h
+alpha=0.05; 
+fun2=function(x,h,alpha){ 
+n=length(x); 
+r=rep(0,times=n-1); 
+for( i in 2:n){ 
+r[i-1]=log(x)-log(x[i-1]); 
+r; 
+} 
+VaR=rep(0,time=n-1); 
+for(i in 2:n){ 
+VaR[i-1]=qnorm(1-alpha)*x[i-1]*h-x[i-1]*mean(r); 
+} 
+VaR 
+} 
+fun2(x,h,alpha)
+
+way 3: Monte-Carlo模拟方法
+
+根据历史数据计算出特征数据均值、标准差等，然后假设 其服从一定的分布，进而对金融资产价值的未来走向作出模拟。 
+假设其金融资产的价值序列服从正态分布。后面操作同法1
+x=； 
+xnew=rnorm(mean=mean(x),sd=sd(x),n=); 
+alpha=0.05; 
+fun1(xnew,alpha) 
