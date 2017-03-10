@@ -12,9 +12,12 @@
  
 #signal come from the macd  to test the signal
 #002493 the real stock test
-gu=read.csv()
-gu$date=as.POSIXct(gu$date)
-gu1=xts(gu,order.by = gu$date) ## just transform the order from 2017-2014  to 2014-2017  这个在作图部分会报错 因为mix了posixct
+setwd('~/desktop')
+x=read.csv('002493.csv')
+
+gu<-xts(x$close,order.by=as.Date(x$date)) ## 如果要包含更多数据就加进去 但是忽略data这个数据  给到order.by里面去.
+gu1<-xts(x[-1],order.by=as.Date(x$date)) ## 这个时候作图就可以成功 不会出现无法识别数据类型的情况了
+
 macd=MACD(gu1[,"close"], 12, 26, 9, maType="EMA" ) 
 signal=as.numeric()
 macd1=as.matrix(na.omit(macd))
@@ -59,8 +62,46 @@ sum(as.numeric(aa))-sum(as.numeric(bb)) = 5.33
 #So consider the each trade we have the enough money to buy one stock. 
 #we need to set our first money and get open information.
 
+策略macd回报率极低,考虑加入双均线策略结合的情况下:
+单双策略 实测:
+函数算多个ma
+ma<-function(x,mas=c(10,20,89)){ 
+       ldata<-x
+       for(m in mas){
+             ldata<-merge(ldata,SMA(cdata,m))
+       }
+       
+        names(ldata)<-c('Value',paste('ma',mas,sep=''))
+        return(ldata)
+   }
+ 手写:  
+a1=SMA(gu,10)
+a2=SMA(gu,20)
+a3=SMA(gu,89)
+ldata=merge(ldata,a1,a2,a3)
 
+Signal<-function(cdata,ldata){
+  (内部函数略)
+} 
 
+tdata<-tdata[which(as.Date(row.names(tdata)),] 
+head(tdata)
+           Value   BS
+2014-03-04 132.45  B
+2014-03-22 125.50  S
+2014-04-17 126.33  B
+2014-04-09 125.55  S
+2014-04-11 127.60  B
+2014-05-08 127.61  S
+
+trade<-function(tdata,capital=100000,position=1,fee=0){  ## no fee and start at 1w 
+内部函数省略
+}
+result1<-trade(tdata,100000)
+tail(result1$ticks,1)
+开始盈利
+结合2策略  减少交易量
+   
 
 
 
