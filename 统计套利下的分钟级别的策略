@@ -31,7 +31,7 @@ signal<-function(){} 略
 police<-function(){} 略
 设置交易的手续费和每次的买入比例 初始价格  完成测试;
 结果
- date profit    ret balance      fee    winRate win fail maxProfit maxLoss avgProfit avgLoss
+       date     profit ret   balance fee winRate win fail maxProfit maxLoss avgProfit avgLoss
 1  2015-04-01   1221  0.023    1650 429    1.00  12    0       250      50       138     NaN
 2  2015-04-02   1077  0.020    1650 573    1.00  15    0       150       0       110     NaN
 3  2015-04-03     64  0.001     100  36    1.00   1    0       100     100       100     NaN
