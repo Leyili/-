@@ -1,0 +1,45 @@
+## 基于统计套利策略下的构建
+## 2 setps   1.寻找高关联性股票   2.构建策略检验
+
+##因为是日内交易  所以得处理日期和时间的关系
+
+read<-function(file){ 
+     df<-read.table(file=file,header=FALSE,sep = ",", na.strings = "NULL")  
+     names(df)<-c("date","Open","High","Low","Close")                       
+     dl<-split(df,format(as.POSIXct(df$date),'%Y-%m-%d'))                   # 按日期分组
+     
+     lapply(dl,function(item){                                              # 换成xts类型数据
+         xts(item[-1],order.by = as.POSIXct(item$date))
+     })
+ }
+ 
+ 
+ 
+ data1<-merge(gu1[['日期']]$Close,gu2[['日期']]$Close) ##日时间
+ 
+ data1<-na.locf(data1)
+ data1$diff<-data1$x1-data1$x2
+ 
+ range(xdf$diff);mean(xdf$diff);hist(xdf$diff,10)
+ pair<-function(x){
+  x$mid<-              #均值回归点
+  x$top<-              #最大阈值
+  x$bottom<-         #最小阈值    基于前面的计算结果
+  return(x)
+}
+signal<-function(){} 略
+police<-function(){} 略
+设置交易的手续费和每次的买入比例 初始价格  完成测试;
+结果
+ date profit    ret balance      fee    winRate win fail maxProfit maxLoss avgProfit avgLoss
+1  2015-04-01   1221  0.023    1650 429    1.00  12    0       250      50       138     NaN
+2  2015-04-02   1077  0.020    1650 573    1.00  15    0       150       0       110     NaN
+3  2015-04-03     64  0.001     100  36    1.00   1    0       100     100       100     NaN
+4  2015-04-04    113  0.002     150  37    1.00   1    0       150     150       150     NaN
+5  2015-04-05    926  0.017    1400 474    1.00  13    0       150     100       108     NaN 
+6  2015-04-15   1191  0.022    1550 359    1.00  10    0       250     100       155     NaN 
+7  2015-04-16     78  0.001     150  72    1.00   1    0       150       0       150     NaN  
+8  2015-04-17    179  0.003     250  71    1.00   2    0       200      50       125     NaN 
+9  2015-04-18     14  0.000      50  36    1.00   1    0        50      50        50     NaN  
+10 2015-04-19    -36 -0.001       0  36     NaN   0    0         0       0       NaN     NaN   
+目前看起来结果还不错.保留!
